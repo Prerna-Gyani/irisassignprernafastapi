@@ -4,22 +4,21 @@ EXCEL_PATH = "data/capbudg.xlsx"
 
 def get_table_names():
     try:
-        xls = pd.ExcelFile(EXCEL_PATH)
-        return xls.sheet_names
-    except:
+        return pd.ExcelFile(EXCEL_PATH).sheet_names
+    except FileNotFoundError:
         return []
 
-def get_row_names(sheet):
-    try:
-        df = pd.read_excel(EXCEL_PATH, sheet_name=sheet)
-        return df.iloc[:, 0].dropna().astype(str).tolist()
-    except:
-        return []
+def get_row_names(sheet_name):
+    df = pd.read_excel(EXCEL_PATH, sheet_name=sheet_name)
+    # first column, drop blanks
+    return df.iloc[:, 0].dropna().astype(str).tolist()
 
-def sum_row_values(sheet, row_name):
-    df = pd.read_excel(EXCEL_PATH, sheet_name=sheet)
+def sum_row_values(sheet_name, row_name):
+    df = pd.read_excel(EXCEL_PATH, sheet_name=sheet_name)
+    # locate the row
     row = df[df.iloc[:, 0].astype(str) == row_name]
     if row.empty:
         return 0
-    numeric_data = row.iloc[0, 1:].apply(pd.to_numeric, errors='coerce')
-    return numeric_data.sum(skipna=True)
+    # sum all numeric columns (skip the first one)
+    nums = pd.to_numeric(row.iloc[0, 1:], errors="coerce")
+    return nums.sum(skipna=True)
