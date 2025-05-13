@@ -1,27 +1,28 @@
 import streamlit as st
 from utils import get_table_names, get_row_names, sum_row_values
 
-st.set_page_config(page_title="IRIS Prerna Gyanchandani Assignment")
+st.set_page_config(page_title="IRIS Excel Processor Assignment")
 
-st.title("IRIS Prerna Gyanchandani Assignment")
-st.markdown("#### Excel: capbudg.xlsx")
+st.title("IRIS Excel Processor Prerna Gyanchandani Assignment")
+st.markdown("Process and analyze Excel data interactively.")
 
-# 1️⃣ List all sheets
+# Step 1: List all tables (sheet names)
 tables = get_table_names()
 if not tables:
-    st.error("No sheets found in data/capbudg.xlsx")
+    st.error("No tables found in the Excel file.")
     st.stop()
 
-table = st.selectbox("Select a table", tables)
+selected_table = st.selectbox("Select a table (sheet):", tables)
 
-# 2️⃣ Show row names (first-column values)
-if table:
-    rows = get_row_names(table)
-    st.subheader("Row Names in “%s”" % table)
-    st.write(rows)
+# Step 2: Display row names for the selected table
+row_names = get_row_names(selected_table)
+if not row_names:
+    st.warning("No rows found in the selected table.")
+    st.stop()
 
-    # 3️⃣ Pick a row and calculate its numeric sum
-    row_choice = st.selectbox("Select a row to sum its numeric values", rows)
-    if st.button("Calculate Sum"):
-        total = sum_row_values(table, row_choice)
-        st.success(f"Sum of numeric values in “{row_choice}”: **{total}**")
+selected_row = st.selectbox("Select a row to calculate sum:", row_names)
+
+# Step 3: Calculate sum of numeric values in the selected row
+if st.button("Calculate Sum"):
+    total = sum_row_values(selected_table, selected_row)
+    st.success(f"Sum of numeric values in '{selected_row}': {total}")
