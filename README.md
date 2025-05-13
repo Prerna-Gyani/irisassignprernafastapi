@@ -1,5 +1,11 @@
 # irisassignprernafastapi
 
+## Using FastAPI 
+
+https://replit.com/@prernadgyani/iris-assignmentprerna?v=1
+
+and below is this project
+
 # IRIS Excel Processor — Prerna Gyanchandani
 
 This Streamlit web app allows users to upload and analyze Excel files interactively. The app was created as a solution to the IRIS Public Assignment using Streamlit Cloud instead of FastAPI, making it accessible directly through the browser without requiring a local environment.
