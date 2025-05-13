@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import re
 import os
 
 st.set_page_config(layout="wide")
@@ -16,8 +15,12 @@ if not os.path.exists(file_path):
     st.error("Missing capbudg.xls in /data folder.")
     st.stop()
 
+# Load the Excel file and extract sheet names
 sheets = load_excel(file_path)
-sheet_names = list(sheets.keys())
+sheet_names = list(sheets.keys())  # This should give the correct sheet names
+
+# Debugging: Show sheet names
+st.write(f"Sheet Names Extracted: {sheet_names}")
 
 option = st.sidebar.selectbox("Choose Functionality", [
     "List Tables (/list_tables)",
