@@ -1,28 +1,66 @@
 import streamlit as st
-from utils import get_table_names, get_row_names, sum_row_values
+import pandas as pd
+import re
+import os
 
-st.set_page_config(page_title="IRIS Excel Processor Assignment")
+st.set_page_config(layout="wide")
+st.title("IRIS Excel Processor Assignment – Streamlit Version")
 
-st.title("IRIS Excel Processor Prerna Gyanchandani Assignment")
-st.markdown("Process and analyze Excel data interactively.")
+@st.cache_data
+def load_excel(file):
+    return pd.read_excel(file, sheet_name=None)
 
-# Step 1: List all tables (sheet names)
-tables = get_table_names()
-if not tables:
-    st.error("No tables found in the Excel file.")
+# Load file
+file_path = "data/capbudg.xls"
+if not os.path.exists(file_path):
+    st.error("Missing capbudg.xls in /data folder.")
     st.stop()
 
-selected_table = st.selectbox("Select a table (sheet):", tables)
+sheets = load_excel(file_path)
+sheet_names = list(sheets.keys())
 
-# Step 2: Display row names for the selected table
-row_names = get_row_names(selected_table)
-if not row_names:
-    st.warning("No rows found in the selected table.")
-    st.stop()
+option = st.sidebar.selectbox("Choose Functionality", [
+    "List Tables (/list_tables)",
+    "Get Table Details (/get_table_details)",
+    "Row Sum (/row_sum)"
+])
 
-selected_row = st.selectbox("Select a row to calculate sum:", row_names)
+# 1. List Tables
+if option == "List Tables (/list_tables)":
+    st.subheader("Available Tables in Excel File")
+    st.json({"tables": sheet_names})
 
-# Step 3: Calculate sum of numeric values in the selected row
-if st.button("Calculate Sum"):
-    total = sum_row_values(selected_table, selected_row)
-    st.success(f"Sum of numeric values in '{selected_row}': {total}")
+# 2. Get Table Details
+elif option == "Get Table Details (/get_table_details)":
+    table = st.selectbox("Select Table", sheet_names)
+    df = sheets[table]
+    if not df.empty:
+        row_names = df.iloc[:, 0].dropna().astype(str).tolist()
+        st.json({"table_name": table, "row_names": row_names})
+    else:
+        st.warning("Selected table is empty.")
+
+# 3. Row Sum
+elif option == "Row Sum (/row_sum)":
+    table = st.selectbox("Select Table", sheet_names)
+    df = sheets[table]
+
+    if not df.empty:
+        row_names = df.iloc[:, 0].dropna().astype(str).tolist()
+        row = st.selectbox("Select Row", row_names)
+        row_index = df[df.iloc[:, 0].astype(str) == row].index
+
+        if not row_index.empty:
+            values = df.iloc[row_index[0], 1:]
+            total = 0
+            for v in values:
+                if isinstance(v, (int, float)):
+                    total += v
+                elif isinstance(v, str):
+                    matches = re.findall(r"[-+]?\d*\.\d+|\d+", v)
+                    total += sum(float(x) for x in matches)
+            st.json({"table_name": table, "row_name": row, "sum": total})
+        else:
+            st.error("Row not found.")
+    else:
+        st.warning("Selected table is empty.")
