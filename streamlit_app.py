@@ -1,7 +1,7 @@
 import streamlit as st
 from utils import get_table_names, get_table_data, add_row_to_table, delete_row_from_table
 
-st.title("IRIS Public Assignment - Excel Manager")
+st.title("IRIS Prerna Gyanchandani Assignment ")
 
 # --- Choose table ---
 tables = get_table_names()
