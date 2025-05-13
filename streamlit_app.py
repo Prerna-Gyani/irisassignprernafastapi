@@ -5,7 +5,7 @@ import os
 st.set_page_config(layout="wide")
 st.title("IRIS Excel Processor Assignment – Streamlit Version")
 
-# Function to load the Excel file
+# Load Excel file
 @st.cache_data
 def load_excel(file):
     return pd.read_excel(file, sheet_name=None)
@@ -24,16 +24,19 @@ df = sheets[sheet_name]
 # Debugging: Show sheet content
 st.write(f"Sheet Content Loaded: {df.head()}")
 
-# Function to detect table boundaries based on the content
+# Extract Table Names based on the expected section titles in the first column
 def extract_table_names(df):
-    # Looking for headers or rows that likely represent different sections
+    # Expected sections in the first column
+    expected_tables = ["INITIAL INVESTMENT", "WORKING CAPITAL", "GROWTH RATES", "SALVAGE VALUE", "OPERATING CASHFLOWS", "EBITDA", "EBIT", "NATCF"]
     table_names = []
+
     for i, row in df.iterrows():
-        if isinstance(row[0], str) and row[0].strip().upper() in ["INITIAL INVESTMENT", "WORKING CAPITAL", "GROWTH RATES", "SALVAGE VALUE", "OPERATING CASHFLOWS", "EBITDA", "EBIT", "NATCF"]:
+        if isinstance(row[0], str) and row[0].strip().upper() in expected_tables:
             table_names.append(row[0].strip())
+    
     return table_names
 
-# Extract the table names based on the structure of the Excel sheet
+# Extract the table names
 table_names = extract_table_names(df)
 
 # Add a sidebar for navigation options
@@ -52,15 +55,16 @@ elif option == "Get Table Details (/get_table_details)":
     # Table selection from the extracted table names
     table = st.selectbox("Select Table", table_names)
     
-    # Display content of selected table (for simplicity, displaying top rows of that section)
+    # Display content of selected table
     st.subheader(f"Details for {table}")
     
     # Finding the starting row for the selected table
     start_row = df[df.iloc[:, 0].str.contains(table, case=False, na=False)].index[0]
-    st.write(f"Found table '{table}' at row index {start_row}")
+    end_row = start_row + 10  # Show next 10 rows of that table section
+    st.write(f"Displaying rows from {start_row} to {end_row}")
     
     # Display a few rows after that start row
-    st.write(df.iloc[start_row:start_row + 10])  # Adjust to show more or fewer rows based on content
+    st.write(df.iloc[start_row:end_row])  # Adjust to show more or fewer rows based on content
 
 # 3. Row Sum
 elif option == "Row Sum (/row_sum)":
@@ -70,7 +74,7 @@ elif option == "Row Sum (/row_sum)":
     # Search for the row_name in the selected table
     row_data = df[df.iloc[:, 0].str.contains(row_name, case=False, na=False)]
     if not row_data.empty:
-        values = row_data.iloc[0, 1:].values
+        values = row_data.iloc[0, 1:].values  # Extracting values excluding the first column
         total = sum([val for val in values if isinstance(val, (int, float))])
         st.json({"table_name": table, "row_name": row_name, "sum": total})
     else:
