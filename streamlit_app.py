@@ -38,6 +38,12 @@ def extract_table_names(df):
 # Extract the table names based on the structure of the Excel sheet
 table_names = extract_table_names(df)
 
+# Add a sidebar for navigation options
+option = st.sidebar.selectbox(
+    "Select an Option",
+    ["List Tables (/list_tables)", "Get Table Details (/get_table_details)", "Row Sum (/row_sum)"]
+)
+
 # 1. List Tables
 if option == "List Tables (/list_tables)":
     st.subheader("Available Tables in Excel File")
