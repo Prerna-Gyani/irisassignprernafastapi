@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import os
-import re
 
 st.set_page_config(layout="wide")
 st.title("IRIS Excel Processor Assignment – Streamlit Version")
@@ -27,11 +26,10 @@ st.write(f"Sheet Content Loaded: {df.head()}")
 
 # Function to detect table boundaries based on the content
 def extract_table_names(df):
-    # This is an example where we identify rows that start with capitalized headings
+    # Looking for headers or rows that likely represent different sections
     table_names = []
     for i, row in df.iterrows():
-        # If the first column is a section header, treat it as a table name
-        if isinstance(row[0], str) and row[0].isupper() and not row[0].startswith(' '):
+        if isinstance(row[0], str) and row[0].strip().upper() in ["INITIAL INVESTMENT", "WORKING CAPITAL", "GROWTH RATES", "SALVAGE VALUE", "OPERATING CASHFLOWS", "EBITDA", "EBIT", "NATCF"]:
             table_names.append(row[0].strip())
     return table_names
 
@@ -54,13 +52,15 @@ elif option == "Get Table Details (/get_table_details)":
     # Table selection from the extracted table names
     table = st.selectbox("Select Table", table_names)
     
-    # Find the rows for the selected table
-    rows = []
-    for i, row in df.iterrows():
-        if isinstance(row[0], str) and row[0].strip().startswith(table):
-            rows.append(row[0].strip())
+    # Display content of selected table (for simplicity, displaying top rows of that section)
+    st.subheader(f"Details for {table}")
     
-    st.json({"table_name": table, "row_names": rows})
+    # Finding the starting row for the selected table
+    start_row = df[df.iloc[:, 0].str.contains(table, case=False, na=False)].index[0]
+    st.write(f"Found table '{table}' at row index {start_row}")
+    
+    # Display a few rows after that start row
+    st.write(df.iloc[start_row:start_row + 10])  # Adjust to show more or fewer rows based on content
 
 # 3. Row Sum
 elif option == "Row Sum (/row_sum)":
