@@ -19,111 +19,53 @@ if not os.path.exists(file_path):
 
 # Load the Excel file and extract sheet names
 sheets = load_excel(file_path)
-sheet_names = list(sheets.keys())  # Extract the sheet names
+sheet_name = "CapBudgWS"
+df = sheets[sheet_name]
 
-# Debugging: Show sheet names
-st.write(f"Sheet Names Extracted: {sheet_names}")
+# Debugging: Show sheet content
+st.write(f"Sheet Content Loaded: {df.head()}")
 
-option = st.sidebar.selectbox("Choose Functionality", [
-    "List Tables (/list_tables)",
-    "Get Table Details (/get_table_details)",
-    "Row Sum (/row_sum)"
-])
+# Function to detect table boundaries based on the content
+def extract_table_names(df):
+    # This is an example where we identify rows that start with capitalized headings
+    table_names = []
+    for i, row in df.iterrows():
+        # If the first column is a section header, treat it as a table name
+        if isinstance(row[0], str) and row[0].isupper() and not row[0].startswith(' '):
+            table_names.append(row[0].strip())
+    return table_names
+
+# Extract the table names based on the structure of the Excel sheet
+table_names = extract_table_names(df)
 
 # 1. List Tables
 if option == "List Tables (/list_tables)":
     st.subheader("Available Tables in Excel File")
-    # Manually list tables based on your Excel sheet structure
-    # Adjust these names to reflect the correct sections in your sheet
-    table_names = [
-        "Initial Investment",
-        "Cashflow Details",
-        "Discount Rate",
-        "Working Capital",
-        "Growth Rates",
-        "Investment Measures",
-        "Book Value & Depreciation"
-    ]
     st.json({"tables": table_names})
 
 # 2. Get Table Details
 elif option == "Get Table Details (/get_table_details)":
-    # Table selection from the manually specified list
-    table = st.selectbox("Select Table", [
-        "Initial Investment",
-        "Cashflow Details",
-        "Discount Rate",
-        "Working Capital",
-        "Growth Rates",
-        "Investment Measures",
-        "Book Value & Depreciation"
-    ])
+    # Table selection from the extracted table names
+    table = st.selectbox("Select Table", table_names)
     
-    df = sheets["Sheet1"]  # Assuming data is in the first sheet
-    row_names = []  # Placeholder for row names
+    # Find the rows for the selected table
+    rows = []
+    for i, row in df.iterrows():
+        if isinstance(row[0], str) and row[0].strip().startswith(table):
+            rows.append(row[0].strip())
     
-    # Example logic for handling the "Initial Investment" table:
-    if table == "Initial Investment":
-        row_names = [
-            "Initial Investment=",
-            "Opportunity cost (if any)=",
-            "Lifetime of the investment",
-            "Salvage Value at end of project=",
-            "Deprec. method(1:St.line;2:DDB)=",
-            "Tax Credit (if any )=",
-            "Other invest.(non-depreciable)="
-        ]
-    elif table == "Working Capital":
-        row_names = [
-            "Initial Investment in Work. Cap=",
-            "Working Capital as % of Rev=",
-            "Salvageable fraction at end="
-        ]
-    
-    # Displaying row names
-    st.json({"table_name": table, "row_names": row_names})
+    st.json({"table_name": table, "row_names": rows})
 
 # 3. Row Sum
 elif option == "Row Sum (/row_sum)":
-    # Table selection from the manually specified list
-    table = st.selectbox("Select Table", [
-        "Initial Investment",
-        "Cashflow Details",
-        "Discount Rate",
-        "Working Capital",
-        "Growth Rates",
-        "Investment Measures",
-        "Book Value & Depreciation"
-    ])
-    
-    df = sheets["Sheet1"]  # Assuming data is in the first sheet
+    table = st.selectbox("Select Table", table_names)
+    row_name = st.text_input("Enter Row Name", "")
 
-    if table == "Initial Investment":
-        row_names = [
-            "Initial Investment=",
-            "Opportunity cost (if any)=",
-            "Lifetime of the investment",
-            "Salvage Value at end of project=",
-            "Deprec. method(1:St.line;2:DDB)=",
-            "Tax Credit (if any )=",
-            "Other invest.(non-depreciable)="
-        ]
-    # Add logic for other tables
-
-    # Row selection and sum calculation
-    row_name = st.selectbox("Select Row", row_names)
-    row_index = df[df.iloc[:, 0].astype(str) == row_name].index
-
-    if not row_index.empty:
-        values = df.iloc[row_index[0], 1:]
-        total = 0
-        for v in values:
-            if isinstance(v, (int, float)):
-                total += v
-            elif isinstance(v, str):
-                # Match numbers in the string
-                matches = re.findall(r"[-+]?\d*\.\d+|\d+", v)
-                total += sum(float(x) for x in matches)
+    # Search for the row_name in the selected table
+    row_data = df[df.iloc[:, 0].str.contains(row_name, case=False, na=False)]
+    if not row_data.empty:
+        values = row_data.iloc[0, 1:].values
+        total = sum([val for val in values if isinstance(val, (int, float))])
         st.json({"table_name": table, "row_name": row_name, "sum": total})
     else:
         st.error("Row not found.")
